@@ -1,6 +1,10 @@
 import express from 'express'
 import cors from 'cors'
 import 'express-async-errors'
+import swaggerUi from 'swagger-ui-express'
+import YAML from 'yamljs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 import authRoutes         from './routes/auth.routes.js'
 import cardsRoutes        from './routes/cards.routes.js'
@@ -15,6 +19,11 @@ import { errorHandler }   from './middleware/error.middleware.js'
 
 const app = express()
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'))
+
+app.use('/api-doc', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }))
 app.use(express.json())
