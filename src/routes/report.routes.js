@@ -1,11 +1,10 @@
 import { Router } from 'express'
-import { generateReport } from '../controllers/report.controller.js'
 import { protect } from '../middleware/auth.middleware.js'
+import { getReport } from '../controllers/report.controller.js'
 
 const router = Router()
-
 router.use(protect)
 
-router.post('/', generateReport)
+router.get('/', getReport)
 
 export default router

@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto'
 import Transaction from '../db/models/Transaction.js'
 import Card from '../db/models/Card.js'
-import { resolveRouting } from '../services/routing.js'
-import { checkAnomaly } from '../services/anomaly.js'
+import { resolvePayment } from '../services/routing.js'
+import { detectAnomalies } from '../services/anomaly.js'
 
 // GET /api/transactions
 export async function getTransactions(req, res) {
@@ -45,17 +45,19 @@ export async function createTransaction(req, res) {
     resolvedPrimary = card
     resolvedSplits = []
   } else {
-    const routingResult = await resolveRouting(req.user._id, amount)
-    if (!routingResult.primary) return res.status(400).json({ error: 'No active cards for routing' })
-    resolvedPrimary = routingResult.primary
-    resolvedSplits = routingResult.splits
+    const routingResult = await resolvePayment(req.user._id, amount)
+    if (!routingResult.success) return res.status(400).json({ error: routingResult.reason })
+    resolvedPrimary = routingResult.allocations[0].card
+    resolvedSplits = routingResult.allocations
   }
 
   // 2. Check if transaction amount is unusually high for the category
-  const { isAnomaly, reason } = await checkAnomaly(req.user._id, category || 'other', amount)
+  const anomaly = await detectAnomalies(req.user._id, amount, merchant, category || 'other')
+  const isAnomaly = !!anomaly
+  const reason = anomaly ? anomaly.reasons.join(', ') : undefined
 
   // 3. Save the transaction record
-  const splitData = resolvedSplits.map(s => ({ cardId: s.card._id, amount: s.amount }))
+  const splitData = resolvedSplits.map(s => ({ cardId: s.card._id, amount: s.charge || s.amount }))
   
   const transaction = await Transaction.create({
     pan: resolvedPrimary.pan,

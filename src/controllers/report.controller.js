@@ -1,36 +1,35 @@
 import Transaction from '../db/models/Transaction.js'
+import { getSpendingSummary } from '../services/insights.js'
 
-// POST /api/report  — generate a spending report for a date range
-export async function generateReport(req, res) {
-  const { from, to, format = 'json' } = req.body
+export async function getReport(req, res) {
+  const days  = parseInt(req.query.days ?? '30')
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
-  const filter = {
-    userId: req.user._id,
-    transactionDate: {
-      $gte: new Date(from),
-      $lte: new Date(to),
-    },
-  }
+  const [txns, summary] = await Promise.all([
+    Transaction.find({ userId: req.user._id, transactionDate: { $gte: since } })
+      .sort({ transactionDate: -1 }),
+    getSpendingSummary(req.user._id, days)
+  ])
 
-  const transactions = await Transaction.find(filter).sort({ transactionDate: -1 })
-
-  const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0)
-  const byCategory = transactions.reduce((acc, t) => {
-    const cat = t.category || 'other'
-    acc[cat] = (acc[cat] || 0) + t.amount
-    return acc
-  }, {})
-
-  // TODO: support PDF/CSV format via a report service
   res.json({
     report: {
-      from,
-      to,
-      totalSpent,
-      totalSpentNGN: (totalSpent / 100).toFixed(2),
-      byCategory,
-      transactionCount: transactions.length,
-      format,
-    },
+      generatedAt:  new Date().toISOString(),
+      period:       `Last ${days} days`,
+      user:         req.user.name,
+      totalSpent:   summary.totalSpent / 100,
+      currency:     'NGN',
+      byCategory:   Object.fromEntries(
+        Object.entries(summary.byCategory).map(([k,v]) => [k, v / 100])
+      ),
+      topMerchants: summary.topMerchants.map(([m,v]) => ({ merchant: m, amount: v / 100 })),
+      transactions: txns.map(t => ({
+        date:      t.transactionDate,
+        merchant:  t.merchant,
+        category:  t.category,
+        amount:    t.amount / 100,
+        reference: t.reference,
+        flagged:   t.isAnomaly,
+      }))
+    }
   })
 }

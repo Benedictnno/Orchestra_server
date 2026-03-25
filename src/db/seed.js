@@ -15,6 +15,8 @@ import CardBalance  from './models/CardBalance.js'
 import RoutingRule  from './models/RoutingRule.js'
 import Transaction  from './models/Transaction.js'
 import VirtualCard  from './models/VirtualCard.js'
+import BusinessCard from './models/BusinessCard.js'
+import ApprovalRequest from './models/ApprovalRequest.js'
 
 await connectDB()
 
@@ -26,6 +28,8 @@ await Promise.all([
   RoutingRule.deleteMany({}),
   Transaction.deleteMany({}),
   VirtualCard.deleteMany({}),
+  BusinessCard.deleteMany({}),
+  ApprovalRequest.deleteMany({}),
 ])
 console.log('🗑  Cleared existing data')
 
@@ -100,6 +104,53 @@ await VirtualCard.create({
   pan: '4111111111111111',
   expiryDate: '2612',
 })
+
+  // --- DAY 3 DEMO DATA: Virtual Cards ---
+  await VirtualCard.insertMany([
+    {
+      userId: alice._id,
+      parentCardId: aliceDebit._id,  // GTBank Main
+      label: 'Netflix Sub',
+      merchant: 'Netflix',
+      spendLimit: 500000,    // 5k
+      amountSpent: 350000,   // 3.5k
+      pan: 'VIRT923456781200',
+      expiryDate: '2712'
+    },
+    {
+      userId: alice._id,
+      parentCardId: aliceDebit._id,  // GTBank Main
+      label: 'Spotify Sub',
+      merchant: 'Spotify',
+      spendLimit: 300000,    // 3k
+      amountSpent: 299900,   // 2.999k (early maxed)
+      pan: 'VIRT923456789901',
+      expiryDate: '2801'
+    }
+  ])
+
+  // --- DAY 3 DEMO DATA: Business Cards ---
+  const bCard = await BusinessCard.create({
+    businessUserId: bob._id,
+    assignedTo: 'Emeka Okafor',
+    purpose: 'Q1 Field Sales Trip',
+    budget: 15000000, // 150k NGN
+    amountSpent: 4750000, // 47.5k NGN
+    merchantCategories: ['airlines', 'hotels', 'restaurants'],
+    approvalThreshold: 2000000, // 20k NGN
+    pan: 'BIZ5000219904992',
+    expiresAt: new Date(Date.now() + 60 * 86400000)
+  })
+
+  // --- DAY 3 DEMO DATA: Approval Request ---
+  await ApprovalRequest.create({
+    businessCardId: bCard._id,
+    requestedBy: 'Emeka Okafor',
+    amount: 4500000, // 45k NGN
+    merchant: 'Air Peace',
+    reason: 'Flight to Abuja for Q1 sales meeting',
+    status: 'pending'
+  })
 
 console.log('✅  Seed complete!')
 console.log('   alice@example.com / Password123!')
