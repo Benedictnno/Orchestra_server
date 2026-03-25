@@ -1,0 +1,339 @@
+openapi: 3.0.0
+info:
+  title: Orchestra API
+  description: Programmable ATM Card Orchestration Platform API
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [individual, business]
+        businessName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Card:
+      type: object
+      properties:
+        _id:
+          type: string
+        pan:
+          type: string
+        expiryDate:
+          type: string
+        issuerNr:
+          type: string
+        cardStatus:
+          type: string
+        cardType:
+          type: string
+          enum: [debit, prepaid, virtual]
+        label:
+          type: string
+        isDefault:
+          type: boolean
+        spendLimit:
+          type: number
+
+    Transaction:
+      type: object
+      properties:
+        _id:
+          type: string
+        pan:
+          type: string
+        cardId:
+          type: string
+        userId:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        merchant:
+          type: string
+        category:
+          type: string
+        transactionDate:
+          type: string
+          format: date-time
+        isAnomaly:
+          type: boolean
+        anomalyReason:
+          type: string
+
+    RoutingRule:
+      type: object
+      properties:
+        _id:
+          type: string
+        mode:
+          type: string
+          enum: [primary, balanced, auto-split]
+        primaryCardId:
+          type: string
+        cardOrder:
+          type: array
+          items:
+            type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                role: { type: string, enum: [individual, business] }
+                businessName: { type: string }
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Validation error
+
+  /api/auth/login:
+    post:
+      summary: Login user
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Successful login
+        '401':
+          description: Invalid credentials
+
+  /api/auth/me:
+    get:
+      summary: Get current authenticated user
+      tags: [Auth]
+      responses:
+        '200':
+          description: User profile returned
+
+  /api/cards:
+    get:
+      summary: Get all cards for the user
+      tags: [Cards]
+      responses:
+        '200':
+          description: List of cards
+    post:
+      summary: Add a new card
+      tags: [Cards]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Card'
+      responses:
+        '201':
+          description: Card created
+
+  /api/cards/{id}:
+    get:
+      summary: Get a specific card
+      tags: [Cards]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Card object
+    patch:
+      summary: Update a card
+      tags: [Cards]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Card updated
+    delete:
+      summary: Delete a card
+      tags: [Cards]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Card removed
+
+  /api/cards/{id}/balance:
+    get:
+      summary: Fetch latest live balance from Card360
+      tags: [Cards]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Live balance fetched
+
+  /api/transactions:
+    get:
+      summary: Get user transactions
+      tags: [Transactions]
+      parameters:
+        - in: query
+          name: cardId
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50 }
+      responses:
+        '200':
+          description: Paginated transaction list
+    post:
+      summary: Create a transaction using routing
+      tags: [Transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount: { type: integer, description: Amount in kobo }
+                merchant: { type: string }
+                category: { type: string }
+                cardId: { type: string, description: Optional forced card override }
+      responses:
+        '201':
+          description: Transaction created successfully
+
+  /api/routing:
+    get:
+      summary: Get user routing rule
+      tags: [Routing]
+      responses:
+        '200':
+          description: Routing rule object
+    put:
+      summary: Upsert user routing rule
+      tags: [Routing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutingRule'
+      responses:
+        '200':
+          description: Routing rule updated
+
+  /api/routing/simulate:
+    post:
+      summary: Simulate routing engine decision
+      tags: [Routing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount: { type: integer }
+      responses:
+        '200':
+          description: Simulation result
+
+  /api/anomalies:
+    get:
+      summary: Get all flagged anomalies
+      tags: [Anomalies]
+      responses:
+        '200':
+          description: List of anomalous transactions
+  
+  /api/anomalies/scan:
+    post:
+      summary: Trigger scanning of latest transactions
+      tags: [Anomalies]
+      responses:
+        '200':
+          description: Number of anomalies flagged
+
+  /api/insights:
+    get:
+      summary: Get cached AI financial insight
+      tags: [Insights]
+      responses:
+        '200':
+          description: Insight object
+
+  /api/insights/generate:
+    post:
+      summary: Force generation of fresh AI insight
+      tags: [Insights]
+      responses:
+        '200':
+          description: Newly generated insight
