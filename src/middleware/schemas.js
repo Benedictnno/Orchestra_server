@@ -12,7 +12,10 @@ export const registerSchema = z.object({
   password:     z.string().min(8, 'Password must be at least 8 characters'),
   role:         z.enum(['individual', 'business']).default('individual'),
   businessName: z.string().optional(),
-})
+}).refine(
+  data => data.role !== 'business' || !!data.businessName,
+  { message: 'businessName is required for business accounts', path: ['businessName'] }
+)
 
 export const loginSchema = z.object({
   email:    z.string().email('Invalid email address'),
@@ -32,7 +35,7 @@ export const addCardSchema = z.object({
   customerId:  z.string().optional(),
   cardStatus:  z.enum(['0', '1', '2']).default('1'),
   seqNr:       z.string().optional(),
-  cardType:    z.enum(['debit', 'prepaid', 'virtual']),
+  cardType:    z.enum(['debit', 'prepaid']),
   label:       z.string().optional(),
   bank:        z.string().optional(),
   color:       z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'color must be a hex code').optional(),
@@ -55,6 +58,7 @@ export const simulateRoutingSchema = z.object({
   merchant: z.string().optional(),
   category: z.enum(['food', 'transport', 'subscriptions', 'utilities',
                     'entertainment', 'shopping', 'other']).optional(),
+  save:     z.boolean().default(false),
 })
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
@@ -98,4 +102,12 @@ export const reportSchema = z.object({
   from:   z.string().datetime('from must be an ISO date string'),
   to:     z.string().datetime('to must be an ISO date string'),
   format: z.enum(['json', 'csv', 'pdf']).default('json'),
+})
+
+// ─── Business ─────────────────────────────────────────────────────────────────
+
+export const approvalSchema = z.object({
+  requestId: z.string().min(1, 'requestId is required'),
+  action:    z.enum(['approve', 'reject']),
+  note:      z.string().optional(),
 })

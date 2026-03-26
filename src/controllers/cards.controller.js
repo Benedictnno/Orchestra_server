@@ -2,6 +2,9 @@ import Card from '../db/models/Card.js'
 import CardBalance from '../db/models/CardBalance.js'
 import { card360 } from '../services/card360.js'
 
+// Mask PAN to last 4 digits for all API responses
+const maskPan = (pan) => pan ? `****-****-****-${pan.slice(-4)}` : null
+
 export async function getCards(req, res) {
   const cards = await Card.find({ userId: req.user._id })
 
@@ -34,6 +37,7 @@ export async function getCards(req, res) {
 
     return {
       ...card.toObject(),
+      pan:              maskPan(card.pan),
       availableBalance: bal.availableBalance ?? 0,
       ledgerBalance:    bal.ledgerBalance ?? 0,
       currency:         bal.currency ?? 'NGN',
@@ -69,7 +73,8 @@ export async function addCard(req, res) {
 export async function getCard(req, res) {
   const card = await Card.findOne({ _id: req.params.id, userId: req.user._id })
   if (!card) return res.status(404).json({ error: 'Card not found' })
-  res.json({ card })
+  const cardObj = card.toObject()
+  res.json({ card: { ...cardObj, pan: maskPan(cardObj.pan) } })
 }
 
 export async function updateCard(req, res) {

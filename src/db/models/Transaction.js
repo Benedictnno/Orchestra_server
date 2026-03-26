@@ -21,4 +21,9 @@ const txSchema = new mongoose.Schema({
   simulatedSplit:   [{ cardId: mongoose.Schema.Types.ObjectId, amount: Number }],
 }, { timestamps: true })
 
+// Indexes for the most common query patterns
+txSchema.index({ userId: 1, transactionDate: -1 })   // GET /transactions list
+txSchema.index({ userId: 1, category: 1 })            // category filter
+txSchema.index({ reference: 1 }, { unique: true, sparse: true }) // dedup guard
+
 export default mongoose.model('Transaction', txSchema)

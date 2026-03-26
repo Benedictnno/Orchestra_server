@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import User from '../db/models/User.js'
+import BlockedToken from '../db/models/BlockedToken.js'
 
 function signToken(id) {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -44,4 +45,20 @@ export async function login(req, res) {
 // GET /api/auth/me
 export async function getMe(req, res) {
   res.json({ user: req.user })
+}
+
+// POST /api/auth/logout
+export async function logout(req, res) {
+  // req.token is set by the protect middleware
+  const token   = req.token
+  const decoded = jwt.decode(token)                   // already verified — just decode exp
+  const expiresAt = new Date(decoded.exp * 1000)      // exp is in seconds, Date wants ms
+
+  await BlockedToken.updateOne(
+    { token },
+    { token, expiresAt },
+    { upsert: true }                                  // idempotent — safe to call twice
+  )
+
+  res.json({ message: 'Logged out successfully' })
 }

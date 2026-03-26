@@ -1,5 +1,8 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import pinoHttp from 'pino-http'
+import { randomUUID } from 'crypto'
 import 'express-async-errors'
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
@@ -32,6 +35,19 @@ const __dirname = path.dirname(__filename)
 const swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'))
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+
+// Security headers
+app.use(helmet())
+
+// Structured request logging with correlation ID
+app.use(pinoHttp({
+  genReqId: () => randomUUID(),
+  redact:   ['req.headers.authorization'],   // don't log JWTs
+  serializers: {
+    req(req) { return { id: req.id, method: req.method, url: req.url } },
+    res(res) { return { statusCode: res.statusCode } },
+  },
+}))
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }))
 app.use(express.json())

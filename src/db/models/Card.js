@@ -25,4 +25,6 @@ const cardSchema = new mongoose.Schema({
   linkedCardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Card' },
 }, { timestamps: true })
 
+cardSchema.index({ userId: 1 })
+
 export default mongoose.model('Card', cardSchema)
