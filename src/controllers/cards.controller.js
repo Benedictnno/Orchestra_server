@@ -6,7 +6,32 @@ export async function getCards(req, res) {
   const cards = await Card.find({ userId: req.user._id })
 
   const withBalances = await Promise.all(cards.map(async (card) => {
-    const bal = await card360.getBalance(card.pan, card.cardType)
+    // Check for a recent balance (< 5 minutes old)
+    const cached = await CardBalance.findOne({
+      pan: card.pan,
+      fetchedAt: { $gte: new Date(Date.now() - 5 * 60 * 1000) }
+    }).sort({ fetchedAt: -1 })
+
+    const bal = cached ? {
+      availableBalance: cached.availableBalance,
+      ledgerBalance: cached.ledgerBalance,
+      currency: cached.currency
+    } : await card360.getBalance(card.pan, card.cardType).then(async (res) => {
+      // Save for next time if it was a successful live fetch
+      if (res.availableBalance !== undefined) {
+        await CardBalance.create({
+          pan: card.pan,
+          cardId: card._id,
+          availableBalance: res.availableBalance,
+          ledgerBalance: res.ledgerBalance,
+          currency: res.currency || 'NGN',
+          responseCode: res.code || '00',
+          responseDescription: res.description || 'Successful'
+        })
+      }
+      return res
+    })
+
     return {
       ...card.toObject(),
       availableBalance: bal.availableBalance ?? 0,

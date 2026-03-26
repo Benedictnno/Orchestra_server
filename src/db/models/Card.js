@@ -16,7 +16,7 @@ const cardSchema = new mongoose.Schema({
 
   // Orchestra fields
   userId:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  cardType:     { type: String, enum: ['debit', 'prepaid', 'virtual'], required: true },
+  cardType:     { type: String, enum: ['debit', 'prepaid'], required: true },
   label:        String,
   bank:         String,
   color:        String,       // hex color for card UI rendering

@@ -28,10 +28,11 @@ export async function resolvePayment(userId, amountKobo) {
 
   if (mode === 'primary') {
     let remaining = amountKobo
-    const ordered = rule?.primaryCardId
-      ? [rule.primaryCardId, ...withBalances.filter(c =>
-          c._id.toString() !== rule.primaryCardId._id.toString())]
-      : withBalances
+    const primaryId = rule.primaryCardId._id.toString()
+    const ordered = [
+      withBalances.find(c => c._id.toString() === primaryId),
+      ...withBalances.filter(c => c._id.toString() !== primaryId),
+    ].filter(Boolean)
     for (const card of ordered) {
       if (remaining <= 0) break
       const charge = Math.min(card.available, remaining)

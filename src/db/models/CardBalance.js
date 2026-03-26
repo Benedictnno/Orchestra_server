@@ -11,4 +11,6 @@ const balanceSchema = new mongoose.Schema({
   fetchedAt:           { type: Date, default: Date.now },
 }, { timestamps: true })
 
+balanceSchema.index({ fetchedAt: 1 }, { expireAfterSeconds: 300 })
+
 export default mongoose.model('CardBalance', balanceSchema)

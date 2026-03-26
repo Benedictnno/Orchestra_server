@@ -29,6 +29,7 @@ export async function getInsights(req, res) {
     - recommendations: array of 3 actionable tips tailored to this user
     - anomalies: array of strings describing unusual patterns (empty array if none)
     - savingsOpportunity: number, estimated monthly savings in NGN
+    - financialScore: number between 0-100 representing overall financial health
   `
 
   const openai   = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })

@@ -69,6 +69,9 @@ export async function handleApproval(req, res) {
     await Transaction.create({
       userId:          req.user._id,
       amount:          request.amount,
+      currency:        'NGN',
+      category:        'other',
+      pan:             card.pan,
       merchant:        request.merchant,
       narration:       request.reason,
       reference:       `APV-${Date.now()}`,

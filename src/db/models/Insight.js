@@ -9,6 +9,7 @@ const insightSchema = new mongoose.Schema({
   savingsOpportunity: Number,    // in NGN
   byCategory:         mongoose.Schema.Types.Mixed,
   totalSpent:         Number,
+  financialScore:     Number,  // 0-100 overall financial health
   generatedAt:        { type: Date, default: Date.now },
 }, { timestamps: true })
 

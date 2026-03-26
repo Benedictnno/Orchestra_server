@@ -15,9 +15,17 @@ import insightsRoutes     from './routes/insights.routes.js'
 import transactionsRoutes from './routes/transactions.routes.js'
 import anomaliesRoutes    from './routes/anomalies.routes.js'
 import reportRoutes       from './routes/report.routes.js'
+import rateLimit from 'express-rate-limit'
 import { errorHandler }   from './middleware/error.middleware.js'
 
 const app = express()
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests, please slow down' }
+})
+app.use('/api/', limiter)
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)

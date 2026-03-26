@@ -1,4 +1,5 @@
 import RoutingRule from '../db/models/RoutingRule.js'
+import Transaction from '../db/models/Transaction.js'
 import { resolvePayment } from '../services/routing.js'
 import { detectAnomalies } from '../services/anomaly.js'
 
@@ -19,12 +20,26 @@ export async function updateRule(req, res) {
 }
 
 export async function simulate(req, res) {
-  const { amount, merchant, category } = req.body
+  const { amount, merchant, category, save = false } = req.body
 
   const result = await resolvePayment(req.user._id, amount)
   if (!result.success) return res.status(400).json(result)
 
   const anomaly = await detectAnomalies(req.user._id, amount, merchant, category)
+
+  if (save) {
+    await Transaction.create({
+      userId:          req.user._id,
+      amount,
+      currency:        'NGN',
+      category:        category || 'other',
+      merchant,
+      narration:       `Simulated: ${merchant}`,
+      reference:       `SIM-${Date.now()}`,
+      transactionDate: new Date(),
+      simulatedSplit:  true
+    })
+  }
 
   res.json({
     ...result,
