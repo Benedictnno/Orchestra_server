@@ -48,11 +48,16 @@ export async function getCards(req, res) {
 }
 
 export async function addCard(req, res) {
-  const { pan, expiryDate, issuerNr, cardSequenceNr,
+  const { pan, expiryDate,
           label, bank, accountNumber, color, cardType } = req.body
 
   // Verify card exists on Card360 (or mock)
-  const c360 = await card360.fetchCard({ pan, expiryDate, issuerNr, cardSequenceNr })
+  const c360 = await card360.fetchCard({ 
+    pan, 
+    expiryDate, 
+    issuerNr: '000001',        // Default filler as user shouldn't input this
+    cardSequenceNr: '01'       // Default filler 
+  })
   if (c360.code !== '00') {
     return res.status(400).json({ error: 'Card not found or invalid details' })
   }

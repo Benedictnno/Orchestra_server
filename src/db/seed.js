@@ -50,18 +50,20 @@ console.log('👤  Users created:', alice.email, bob.email)
 // ── Cards ────────────────────────────────────────────────────────────────────
 const [aliceDebit, alicePrepaid] = await Card.create([
   {
-    pan: '5061460000000000040', expiryDate: '2612', issuerNr: '000001',
+    pan: '5061123456789012', expiryDate: '2612', issuerNr: '000001',
     firstName: 'Alice', lastName: 'Okonkwo', nameOnCard: 'ALICE OKONKWO',
     cardProgram: 'VERVE', customerId: 'CUST001', cardStatus: '1', seqNr: '01',
     userId: alice._id, cardType: 'debit', label: 'GTBank Debit',
     bank: 'GTBank', color: '#FF6B35', isDefault: true,
+    accountNumber: '0123456789',
   },
   {
-    pan: '4084840000000040', expiryDate: '2709', issuerNr: '000002',
+    pan: '4084123456789012', expiryDate: '2709', issuerNr: '000002',
     firstName: 'Alice', lastName: 'Okonkwo', nameOnCard: 'ALICE OKONKWO',
     cardProgram: 'VISA', customerId: 'CUST001', cardStatus: '1', seqNr: '02',
     userId: alice._id, cardType: 'prepaid', label: 'Access Prepaid',
     bank: 'Access Bank', color: '#4ECDC4', isDefault: false,
+    accountNumber: '0987654321',
   },
 ])
 

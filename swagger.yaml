@@ -369,12 +369,10 @@ paths:
           application/json:
             schema:
               type: object
-              required: [pan, expiryDate, issuerNr, cardType]
+              required: [pan, expiryDate, cardType, accountNumber]
               properties:
                 pan: { type: string, minLength: 13, maxLength: 19 }
                 expiryDate: { type: string, pattern: '^\d{4}$', example: '2612' }
-                issuerNr: { type: string }
-                cardSequenceNr: { type: string }
                 cardType: { type: string, enum: [debit, prepaid] }
                 label: { type: string }
                 bank: { type: string, example: "GTBank" }
