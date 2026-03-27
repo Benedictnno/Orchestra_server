@@ -14,6 +14,6 @@ export function getGroqClient() {
 }
 
 export const MODELS = {
-  PREMIUM: 'llama-3.1-70b-versatile',
+  PREMIUM: 'llama-3.3-70b-versatile',
   FAST:    'llama-3.1-8b-instant',
 }
