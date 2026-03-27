@@ -67,8 +67,8 @@ const [aliceDebit, alicePrepaid] = await Card.create([
 
 // ── Card Balances ────────────────────────────────────────────────────────────
 await CardBalance.create([
-  { pan: aliceDebit.pan,   availableBalance: 150_000_00, ledgerBalance: 160_000_00, cardId: aliceDebit._id },
-  { pan: alicePrepaid.pan, availableBalance:  45_000_00, ledgerBalance:  45_000_00, cardId: alicePrepaid._id },
+  { pan: aliceDebit.pan,   availableBalance: 500_000_00, ledgerBalance: 500_000_00, cardId: aliceDebit._id },
+  { pan: alicePrepaid.pan, availableBalance: 500_000_00, ledgerBalance: 500_000_00, cardId: alicePrepaid._id },
 ])
 
 // ── Routing Rule ─────────────────────────────────────────────────────────────
@@ -80,28 +80,51 @@ await RoutingRule.create({
 })
 
 // ── Transactions ─────────────────────────────────────────────────────────────
-const categories = ['food', 'transport', 'subscriptions', 'utilities', 'entertainment', 'shopping', 'other']
-const merchants  = ['Shoprite', 'Uber', 'Netflix', 'EKEDC', 'Filmhouse', 'Jumia', 'Cold Stone']
+const preciseTransactions = [
+  // Food (45k total)
+  { cat: 'food', m: 'Cold Stone', amt: 500000 },
+  { cat: 'food', m: 'KFC', amt: 1000000 },
+  { cat: 'food', m: 'Chicken Republic', amt: 800000 },
+  { cat: 'food', m: 'Domino Pizza', amt: 1200000 },
+  { cat: 'food', m: 'Cold Stone', amt: 1000000 },
+  // Transport (20k total)
+  { cat: 'transport', m: 'Uber', amt: 400000 },
+  { cat: 'transport', m: 'Bolt', amt: 350000 },
+  { cat: 'transport', m: 'Uber', amt: 500000 },
+  { cat: 'transport', m: 'Bolt', amt: 450000 },
+  { cat: 'transport', m: 'Uber', amt: 300000 },
+  // Subscriptions (5k total)
+  { cat: 'subscriptions', m: 'Netflix', amt: 500000 },
+  // Utilities (15k total)
+  { cat: 'utilities', m: 'EKEDC', amt: 1000000 },
+  { cat: 'utilities', m: 'MTN', amt: 500000 },
+  // Entertainment (35k total)
+  { cat: 'entertainment', m: 'Filmhouse', amt: 1500000 },
+  { cat: 'entertainment', m: 'Spotify', amt: 500000 },
+  { cat: 'entertainment', m: 'Filmhouse', amt: 1500000 },
+  // Shopping (60k total)
+  { cat: 'shopping', m: 'Shoprite', amt: 4850000, anomaly: true },
+  { cat: 'shopping', m: 'Jumia', amt: 650000 },
+  { cat: 'shopping', m: 'Spar', amt: 500000 },
+  // Other (10k total)
+  { cat: 'other', m: 'Paystack', amt: 1000000 },
+]
 
-const txData = Array.from({ length: 30 }, (_, i) => {
-  const amount = Math.floor(Math.random() * 50_000_00) + 500_00
-  const isAnomaly = amount > 45_000_00 && i % 4 === 0
-  return {
-    pan: aliceDebit.pan,
-    cardId: aliceDebit._id,
-    userId: alice._id,
-    amount,
-    currency: 'NGN',
-    merchant: merchants[i % merchants.length],
-    category: categories[i % categories.length],
-    narration: `Payment to ${merchants[i % merchants.length]}`,
-    transactionDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000),
-    reference: randomUUID(),
-    responseCode: '00',
-    isAnomaly,
-    anomalyReason: isAnomaly ? 'High value transaction outside normal spending patterns' : undefined,
-  }
-})
+const txData = preciseTransactions.map((tx, i) => ({
+  pan: aliceDebit.pan,
+  cardId: aliceDebit._id,
+  userId: alice._id,
+  amount: tx.amt,
+  currency: 'NGN',
+  merchant: tx.m,
+  category: tx.cat,
+  narration: `Payment to ${tx.m}`,
+  transactionDate: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000), // past 20 days
+  reference: randomUUID(),
+  responseCode: '00',
+  isAnomaly: !!tx.anomaly,
+  anomalyReason: tx.anomaly ? 'High value transaction outside normal spending patterns' : undefined,
+}))
 
 await Transaction.insertMany(txData)
 

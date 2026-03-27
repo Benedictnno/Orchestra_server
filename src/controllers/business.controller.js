@@ -13,6 +13,17 @@ export async function getBusinessCards(req, res) {
   res.json({ cards: withPending })
 }
 
+export async function getApprovalQueue(req, res) {
+  const cards = await BusinessCard.find({ businessUserId: req.user._id }).select('_id')
+  const cardIds = cards.map(c => c._id)
+
+  const requests = await ApprovalRequest.find({ businessCardId: { $in: cardIds }, status: 'pending' })
+    .populate('businessCardId', 'assignedTo purpose pan')
+    .sort({ createdAt: -1 })
+
+  res.json({ approvalQueue: requests })
+}
+
 export async function createBusinessCard(req, res) {
   const { assignedTo, purpose, budget, merchantCategories,
           expiresAt, approvalThreshold } = req.body

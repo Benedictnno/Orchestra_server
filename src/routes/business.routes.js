@@ -5,7 +5,7 @@ import { validate }     from '../middleware/validate.middleware.js'
 import { createBusinessCardSchema, approvalSchema }
   from '../middleware/schemas.js'
 import { getBusinessCards, createBusinessCard,
-         updateBusinessCard, handleApproval }
+         updateBusinessCard, handleApproval, getApprovalQueue }
   from '../controllers/business.controller.js'
 
 const router = Router()
@@ -14,6 +14,7 @@ router.use(protect)
 router.get('/',         requireRole('business'), getBusinessCards)
 router.post('/',        requireRole('business'), validate(createBusinessCardSchema), createBusinessCard)
 router.patch('/:id',    requireRole('business'), updateBusinessCard)
+router.get('/approvals', requireRole('business'), getApprovalQueue)
 router.post('/approve', requireRole('business'), validate(approvalSchema), handleApproval)
 
 export default router
