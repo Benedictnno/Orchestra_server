@@ -18,6 +18,8 @@ import insightsRoutes     from './routes/insights.routes.js'
 import transactionsRoutes from './routes/transactions.routes.js'
 import anomaliesRoutes    from './routes/anomalies.routes.js'
 import reportRoutes       from './routes/report.routes.js'
+import transfersRoutes    from './routes/transfers.routes.js'
+import billsRoutes        from './routes/bills.routes.js'
 import rateLimit from 'express-rate-limit'
 import { errorHandler }   from './middleware/error.middleware.js'
 
@@ -49,7 +51,15 @@ app.use(pinoHttp({
   },
 }))
 
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }))
+// CORS setup — supports multiple URLs as a comma-separated list in .env
+const allowedOrigins = process.env.CLIENT_URL 
+  ? process.env.CLIENT_URL.split(',').map(o => o.trim()) 
+  : '*'
+
+app.use(cors({ 
+  origin:      allowedOrigins,
+  credentials: true 
+}))
 app.use(express.json())
 
 // Health check (public)
@@ -64,6 +74,8 @@ app.use('/api/insights',      insightsRoutes)
 app.use('/api/transactions',  transactionsRoutes)
 app.use('/api/anomalies',     anomaliesRoutes)
 app.use('/api/report',        reportRoutes)
+app.use('/api/transfers',     transfersRoutes)
+app.use('/api/bills',         billsRoutes)
 
 // 404 handler
 app.use((req, res) => {

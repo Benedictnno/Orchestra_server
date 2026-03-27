@@ -893,3 +893,82 @@ paths:
       responses:
         '200':
           description: Formatted financial report
+
+  # ── Transfers ────────────────────────────────────────────────────────────────
+  /api/transfers:
+    get:
+      summary: Get all bank transfer history
+      tags: [Transfers]
+      responses:
+        '200':
+          description: Array of transfer records
+    post:
+      summary: Perform an electronic bank transfer
+      tags: [Transfers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, sourceCardId, recipientBank, recipientAccount, recipientName]
+              properties:
+                amount: { type: number, description: 'In Naira (e.g. 5000.50)' }
+                sourceCardId: { type: string }
+                recipientBank: { type: string, description: 'Bank code e.g. 058' }
+                recipientAccount: { type: string, description: '10-digit NUBAN' }
+                recipientName: { type: string }
+                narration: { type: string }
+      responses:
+        '201':
+          description: Transfer successful
+
+  # ── Bill Payments ────────────────────────────────────────────────────────────
+  /api/bills:
+    get:
+      summary: Get all bill payment history
+      tags: [Bills]
+      responses:
+        '200':
+          description: Array of bill payment records
+    post:
+      summary: Pay a utility bill (DSTV, EKEDC, etc.)
+      tags: [Bills]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, sourceCardId, billerCode, customerId]
+              properties:
+                amount: { type: number, description: 'In Naira' }
+                sourceCardId: { type: string }
+                billerCode: { type: string, description: 'e.g. DSTV' }
+                billerName: { type: string }
+                customerId: { type: string, description: 'Smartcard/Meter/Phone number' }
+                narration: { type: string }
+      responses:
+        '201':
+          description: Bill payment successful
+
+  # ── Virtual Card Top-up ──────────────────────────────────────────────────────
+  /api/virtual-cards/{id}/top-up:
+    post:
+      summary: Fund a virtual card from a physical card
+      tags: [Virtual Cards]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, sourceCardId]
+              properties:
+                amount: { type: number, description: 'In Naira' }
+                sourceCardId: { type: string }
+      responses:
+        '200':
+          description: Top-up successful

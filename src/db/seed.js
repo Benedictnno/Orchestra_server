@@ -17,6 +17,8 @@ import Transaction  from './models/Transaction.js'
 import VirtualCard  from './models/VirtualCard.js'
 import BusinessCard from './models/BusinessCard.js'
 import ApprovalRequest from './models/ApprovalRequest.js'
+import Transfer from './models/Transfer.js'
+import BillPayment from './models/BillPayment.js'
 
 await connectDB()
 
@@ -138,6 +140,63 @@ await ApprovalRequest.create({
   merchant:       'Air Peace',
   reason:         'Flight to Abuja for Q1 sales meeting',
   status:         'pending'
+})
+
+// ── Transfers & Bills ────────────────────────────────────────────────────────
+// 1. A transfer from Alice to her Landlord (GTBank Main)
+const transferRef = randomUUID()
+const aliceTransferTx = await Transaction.create({
+  userId: alice._id,
+  cardId: aliceDebit._id,
+  pan: aliceDebit.pan,
+  amount: 5000000, // ₦50,000
+  type: 'transfer',
+  category: 'transfer',
+  merchant: '058', // GTB Bank Code
+  narration: 'Rent for April 2026',
+  reference: transferRef,
+})
+
+await Transfer.create({
+  userId: alice._id,
+  sourceCardId: aliceDebit._id,
+  sourcePan: aliceDebit.pan,
+  amount: 5000000,
+  recipientBank: '058',
+  recipientAccount: '0123456789',
+  recipientName: 'Ade Landlord',
+  narration: 'Rent for April 2026',
+  reference: transferRef,
+  transactionId: aliceTransferTx._id,
+  status: 'success',
+})
+
+// 2. A DSTV bill payment from Alice's Zenith card
+const billRef = randomUUID()
+const billTx = await Transaction.create({
+  userId: alice._id,
+  cardId: alicePrepaid._id,
+  pan: alicePrepaid.pan,
+  amount: 1500000, // ₦15,000
+  type: 'bill_payment',
+  category: 'bills',
+  merchant: 'DSTV',
+  narration: 'DSTV Premium Subscription',
+  reference: billRef,
+})
+
+await BillPayment.create({
+  userId: alice._id,
+  sourceCardId: alicePrepaid._id,
+  sourcePan: alicePrepaid.pan,
+  amount: 1500000,
+  billerCode: 'DSTV',
+  billerName: 'DSTV Nigeria',
+  customerId: '1092837465', // Smartcard No.
+  narration: 'DSTV Premium Subscription',
+  reference: billRef,
+  transactionId: billTx._id,
+  status: 'success',
 })
 
 console.log('✅  Seed complete!')

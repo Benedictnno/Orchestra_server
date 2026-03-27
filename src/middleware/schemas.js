@@ -112,3 +112,28 @@ export const approvalSchema = z.object({
   action:    z.enum(['approve', 'reject']),
   note:      z.string().optional(),
 })
+
+// ─── Special Operations ───────────────────────────────────────────────────────
+
+export const topUpSchema = z.object({
+  sourceCardId: z.string().min(1, 'sourceCardId is required'),
+  amount:       z.number().positive('amount must be a positive number in Naira'),
+})
+
+export const transferSchema = z.object({
+  amount:           z.number().positive('amount must be a positive number in Naira'),
+  sourceCardId:     z.string().min(1, 'sourceCardId is required'),
+  recipientBank:    z.string().min(1, 'recipientBank is required'),
+  recipientAccount: z.string().length(10, 'NUBAN must be 10 digits'),
+  recipientName:    z.string().min(1, 'recipientName is required'),
+  narration:        z.string().optional(),
+})
+
+export const billPaymentSchema = z.object({
+  amount:       z.number().positive('amount must be a positive number in Naira'),
+  sourceCardId: z.string().min(1, 'sourceCardId is required'),
+  billerCode:   z.string().min(1, 'billerCode is required'),
+  billerName:   z.string().optional(),
+  customerId:   z.string().min(1, 'customerId is required'),
+  narration:    z.string().optional(),
+})
