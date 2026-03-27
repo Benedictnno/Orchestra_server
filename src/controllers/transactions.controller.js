@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto'
 import Transaction from '../db/models/Transaction.js'
+import CardBalance from '../db/models/CardBalance.js'
 import Card from '../db/models/Card.js'
 import { resolvePayment } from '../services/routing.js'
 import { detectAnomalies } from '../services/anomaly.js'
@@ -51,7 +52,7 @@ export async function createTransaction(req, res) {
     const card = await Card.findOne({ _id: cardId, userId: req.user._id })
     if (!card) return res.status(404).json({ error: 'Card not found' })
     resolvedPrimary = card
-    resolvedSplits = []
+    resolvedSplits = [{ card, charge: amount }]
   } else {
     const routingResult = await resolvePayment(req.user._id, amount)
     if (!routingResult.success) return res.status(400).json({ error: routingResult.reason })
@@ -83,6 +84,16 @@ export async function createTransaction(req, res) {
     anomalyReason: reason,
     simulatedSplit: splitData,
   })
+
+  // Update balance cache to reflect deduction so demo mock works perfectly
+  await Promise.all(resolvedSplits.map(s => {
+    const chargeAmt = s.charge || s.amount
+    return CardBalance.findOneAndUpdate(
+      { pan: s.card.pan },
+      { $inc: { availableBalance: -chargeAmt, ledgerBalance: -chargeAmt }, $set: { fetchedAt: new Date() } },
+      { sort: { fetchedAt: -1 } }
+    )
+  }))
 
   const txObj = transaction.toObject()
   res.status(201).json({ transaction: { ...txObj, pan: maskPan(txObj.pan) } })
