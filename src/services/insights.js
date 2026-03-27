@@ -21,8 +21,15 @@ export async function getSpendingSummary(userId, days = 30) {
   const subscriptionSpend = byCategory['subscriptions'] || 0
   const anomalyCount      = txns.filter(t => t.isAnomaly).length
 
+  // Calculate daily spending for line charts
+  const dailySpend = txns.reduce((acc, t) => {
+    const date = t.transactionDate.toISOString().split('T')[0]
+    acc[date] = (acc[date] || 0) + t.amount
+    return acc
+  }, {})
+
   return {
-    byCategory, totalSpent, topMerchants,
+    byCategory, totalSpent, topMerchants, dailySpend,
     transactionCount: txns.length, subscriptionSpend, anomalyCount, days
   }
 }
